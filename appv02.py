@@ -8,9 +8,9 @@ import pandas as pd
 st.set_page_config(page_title="Componentes Conexas", layout="wide")
 
 # ==========================================
-# CSS PERSONALIZADO PARA OPTIMIZAR ESPACIOS
+# CSS PERSONALIZADO PARA OPTIMIZAR ESPACIOS Y CENTRAR
 # ==========================================
-st.markdown("""
+st.markdown('''
 <style>
     /* Reducir el tamaño de alerta/reporte */
     div[data-testid="stAlert"] {
@@ -21,12 +21,22 @@ st.markdown("""
         margin-bottom: 0.2rem !important;
     }
     
-    /* Limitar el ancho máximo de las tablas para que no sean excesivamente grandes */
+    /* CENTRAR TABLAS (st.table) y reducir espacios de celdas */
+    .stTable {
+        margin: 0 auto !important; /* Centra la tabla en su contenedor */
+        width: auto !important;
+    }
+    .stTable th, .stTable td {
+        text-align: center !important; /* Centra los números */
+        padding: 0.4rem 0.8rem !important; /* Disminuye el espacio de las celdas sin que sea diminuta */
+    }
+    
+    /* Centrar contenedor de la tabla interactiva (checkboxes) */
     div[data-testid="stDataFrame"] {
         margin: 0 auto;
     }
 </style>
-""", unsafe_allow_html=True)
+''', unsafe_allow_html=True)
 
 # Título y descripción de la interfaz
 st.title("🧩 Análisis de Componentes Conexas")
@@ -58,7 +68,6 @@ def warshall_con_historial(matriz):
     return historial
 
 def generar_texto_reporte(componentes):
-    # Ya no usamos ==== debajo del titulo para que Markdown no lo vuelva tamaño gigante (H1)
     texto = "**REPORTE FINAL DE COMPONENTES CONEXAS**\n\n"
     texto += f"Número total de componentes conexas: {len(componentes)}\n\n"
     for i, componente in enumerate(componentes, start=1):
@@ -176,10 +185,9 @@ if tipo_generacion == "Generación Aleatoria":
         
     df_matriz = pd.DataFrame(st.session_state['matriz'], index=etiquetas, columns=etiquetas)
     st.markdown("**Matriz de Adyacencia Inicial:**")
-    # Reducción de la cuadrícula a un tamaño más compacto
-    col1, col_t, col2 = st.columns([1.5, 3, 1.5])
+    col1, col_t, col2 = st.columns([1, 4, 1])
     with col_t:
-        st.dataframe(df_matriz.style.set_properties(**{'text-align': 'center'}), use_container_width=True)
+        st.table(df_matriz.style.set_properties(**{'text-align': 'center'}))
 
 elif tipo_generacion == "Generación Manual":
     st.subheader("✍️ Generación Manual Interactiva")
@@ -195,7 +203,7 @@ elif tipo_generacion == "Generación Manual":
     config_columnas = {nodo: st.column_config.CheckboxColumn(nodo, required=True) for nodo in etiquetas}
     llave_dinamica = f"editor_manual_{num_nodos}_{st.session_state['reset_count']}"
     
-    col_espacio1, col_tabla, col_espacio2 = st.columns([1.5, 3, 1.5])
+    col_espacio1, col_tabla, col_espacio2 = st.columns([1, 4, 1])
     with col_tabla:
         df_editado = st.data_editor(
             df_base, 
@@ -249,9 +257,9 @@ if st.session_state['calculado']:
             st.rerun()
 
     df_paso = pd.DataFrame(historial[paso_actual], index=etiquetas, columns=etiquetas)
-    col_p1, col_p2, col_p3 = st.columns([1.5, 3, 1.5])
+    col_p1, col_p2, col_p3 = st.columns([1, 4, 1])
     with col_p2:
-        st.dataframe(df_paso.style.set_properties(**{'text-align': 'center'}), use_container_width=True)
+        st.table(df_paso.style.set_properties(**{'text-align': 'center'}))
 
     if paso_actual == max_pasos:
         st.success(f"¡Análisis completado! Se detectaron {len(st.session_state['componentes'])} componentes fuertemente conexas.")
@@ -266,9 +274,9 @@ if st.session_state['calculado']:
             "Nodo": [nombre_nodo(i) for i in orden],
             "Cantidad de 1s": [cantidades[i] for i in orden]
         })
-        col_d1, col_d2, col_d3 = st.columns([1.5, 3, 1.5])
+        col_d1, col_d2, col_d3 = st.columns([1, 4, 1])
         with col_d2:
-            st.dataframe(detalles_orden.style.set_properties(**{'text-align': 'center'}), hide_index=True, use_container_width=True)
+            st.table(detalles_orden.style.hide(axis="index").set_properties(**{'text-align': 'center'}))
         
         st.markdown("**Matriz de Caminos Reordenada (Bloques Diagonales):**")
         etiquetas_ordenadas = [nombre_nodo(i) for i in orden]
@@ -279,14 +287,12 @@ if st.session_state['calculado']:
             for fila in df.index:
                 for col in df.columns:
                     if df.loc[fila, col] == 1 and df.loc[col, fila] == 1:
-                        estilos.loc[fila, col] = 'background-color: #2e7d32; color: white; text-align: center;'
-                    else:
-                        estilos.loc[fila, col] = 'text-align: center;'
+                        estilos.loc[fila, col] = 'background-color: #2e7d32; color: white;'
             return estilos
             
-        col_f1, col_f2, col_f3 = st.columns([1.5, 3, 1.5])
+        col_f1, col_f2, col_f3 = st.columns([1, 4, 1])
         with col_f2:
-            st.dataframe(df_reordenada.style.apply(resaltar_bloques_diagonales, axis=None), use_container_width=True)
+            st.table(df_reordenada.style.apply(resaltar_bloques_diagonales, axis=None).set_properties(**{'text-align': 'center'}))
         
         st.markdown("---")
         st.markdown("### 📋 Reporte en Pantalla")
