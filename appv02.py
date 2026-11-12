@@ -23,12 +23,12 @@ st.markdown('''
     
     /* CENTRAR TABLAS (st.table) y reducir espacios de celdas */
     .stTable {
-        margin: 0 auto !important; /* Centra la tabla en su contenedor */
+        margin: 0 auto !important;
         width: auto !important;
     }
     .stTable th, .stTable td {
-        text-align: center !important; /* Centra los números */
-        padding: 0.4rem 0.8rem !important; /* Disminuye el espacio de las celdas sin que sea diminuta */
+        text-align: center !important;
+        padding: 0.4rem 0.8rem !important;
     }
     
     /* Centrar contenedor de la tabla interactiva (checkboxes) */
@@ -104,7 +104,8 @@ def encontrar_componentes(caminos):
 
 def mostrar_grafos_comparativos(matriz, componentes):
     n = len(matriz)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.5))
+    # Volvemos a un tamaño amplio pero proporcionado (ancho 12, alto 5)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     pos = {}
     mapa_comp = {}
     for c_idx, comp in enumerate(componentes):
@@ -123,9 +124,10 @@ def mostrar_grafos_comparativos(matriz, componentes):
                 ax1.annotate("", xy=pos[j], xytext=pos[i],
                              arrowprops=dict(arrowstyle="->", connectionstyle=f"arc3,rad={curva}", linewidth=1.5, shrinkA=18, shrinkB=18, color="#1976D2"))
     for i in range(n):
-        ax1.scatter(pos[i][0], pos[i][1], s=600, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
-        ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=10, fontweight="bold", zorder=3)
-    ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold", fontsize=11)
+        # Aumentamos el tamaño de los nodos a 800 para que se vean claros y legibles
+        ax1.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
+        ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
+    ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold", fontsize=13)
     ax1.axis("off")
 
     for i in range(n):
@@ -135,9 +137,9 @@ def mostrar_grafos_comparativos(matriz, componentes):
                 ax2.annotate("", xy=pos[j], xytext=pos[i],
                              arrowprops=dict(arrowstyle="->", connectionstyle=f"arc3,rad={curva}", linewidth=1.5, shrinkA=18, shrinkB=18, color="#2E7D32"))
     for i in range(n):
-        ax2.scatter(pos[i][0], pos[i][1], s=600, edgecolors="#1B5E20", facecolor="white", linewidths=2, zorder=2)
-        ax2.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=10, fontweight="bold", zorder=3)
-    ax2.set_title("Componentes Fuertemente Conexas", fontweight="bold", fontsize=11)
+        ax2.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#1B5E20", facecolor="white", linewidths=2, zorder=2)
+        ax2.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
+    ax2.set_title("Componentes Fuertemente Conexas", fontweight="bold", fontsize=13)
     ax2.axis("off")
     plt.tight_layout()
     return fig
@@ -198,7 +200,10 @@ elif tipo_generacion == "Generación Manual":
         st.session_state['reset_count'] += 1
         st.rerun()
 
-    st.markdown("Marca las casillas donde exista una conexión directa (**Fila** $\to$ **Columna**).")
+    # ====== SOLUCIÓN AL PROBLEMA DEL SIGNO DE DÓLAR ======
+    st.markdown("Marca las casillas donde exista una conexión directa (**Fila** ➡️ **Columna**).")
+    # ======================================================
+
     df_base = pd.DataFrame(st.session_state['matriz'].astype(bool), index=etiquetas, columns=etiquetas)
     config_columnas = {nodo: st.column_config.CheckboxColumn(nodo, required=True) for nodo in etiquetas}
     llave_dinamica = f"editor_manual_{num_nodos}_{st.session_state['reset_count']}"
@@ -295,19 +300,24 @@ if st.session_state['calculado']:
             st.table(df_reordenada.style.apply(resaltar_bloques_diagonales, axis=None).set_properties(**{'text-align': 'center'}))
         
         st.markdown("---")
-        st.markdown("### 📋 Reporte en Pantalla")
-        texto_reporte = generar_texto_reporte(st.session_state['componentes'])
-        st.info(texto_reporte.replace('\n', '  \n')) 
         
-        st.download_button(
-            label="📄 Descargar Reporte (.txt)",
-            data=texto_reporte,
-            file_name="reporte_grafos.txt",
-            mime="text/plain"
-        )
+        # ====== NUEVA ESTRUCTURA EN DOS COLUMNAS ======
+        # col_izq ocupará el 30% del espacio, col_der el 70%
+        col_izq, col_der = st.columns([1.2, 2.8])
         
-        st.markdown("**Representación Gráfica:**")
-        fig = mostrar_grafos_comparativos(st.session_state['matriz'], st.session_state['componentes'])
-        col_g1, col_g2, col_g3 = st.columns([1, 6, 1])
-        with col_g2:
+        with col_izq:
+            st.markdown("### 📋 Reporte en Pantalla")
+            texto_reporte = generar_texto_reporte(st.session_state['componentes'])
+            st.info(texto_reporte.replace('\n', '  \n')) 
+            
+            st.download_button(
+                label="📄 Descargar Reporte (.txt)",
+                data=texto_reporte,
+                file_name="reporte_grafos.txt",
+                mime="text/plain"
+            )
+            
+        with col_der:
+            st.markdown("### 📊 Representación Gráfica")
+            fig = mostrar_grafos_comparativos(st.session_state['matriz'], st.session_state['componentes'])
             st.pyplot(fig)
