@@ -104,7 +104,6 @@ def encontrar_componentes(caminos):
 
 def mostrar_grafos_comparativos(matriz, componentes):
     n = len(matriz)
-    # Volvemos a un tamaño amplio pero proporcionado (ancho 12, alto 5)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     pos = {}
     mapa_comp = {}
@@ -124,7 +123,6 @@ def mostrar_grafos_comparativos(matriz, componentes):
                 ax1.annotate("", xy=pos[j], xytext=pos[i],
                              arrowprops=dict(arrowstyle="->", connectionstyle=f"arc3,rad={curva}", linewidth=1.5, shrinkA=18, shrinkB=18, color="#1976D2"))
     for i in range(n):
-        # Aumentamos el tamaño de los nodos a 800 para que se vean claros y legibles
         ax1.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
         ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
     ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold", fontsize=13)
@@ -200,9 +198,7 @@ elif tipo_generacion == "Generación Manual":
         st.session_state['reset_count'] += 1
         st.rerun()
 
-    # ====== SOLUCIÓN AL PROBLEMA DEL SIGNO DE DÓLAR ======
     st.markdown("Marca las casillas donde exista una conexión directa (**Fila** ➡️ **Columna**).")
-    # ======================================================
 
     df_base = pd.DataFrame(st.session_state['matriz'].astype(bool), index=etiquetas, columns=etiquetas)
     config_columnas = {nodo: st.column_config.CheckboxColumn(nodo, required=True) for nodo in etiquetas}
@@ -271,38 +267,40 @@ if st.session_state['calculado']:
         
         st.markdown("---")
         st.markdown("### 🔄 Reordenamiento de Filas y Columnas")
+        
+        # ====== NUEVA ESTRUCTURA: TABLA A LA IZQ, MATRIZ A LA DER ======
+        col_reorden_izq, col_reorden_der = st.columns([1.5, 2.5])
+        
         orden = st.session_state['orden']
         cantidades = st.session_state['cantidades']
         
-        detalles_orden = pd.DataFrame({
-            "Nuevo Orden": [i + 1 for i in range(num_nodos)],
-            "Nodo": [nombre_nodo(i) for i in orden],
-            "Cantidad de 1s": [cantidades[i] for i in orden]
-        })
-        col_d1, col_d2, col_d3 = st.columns([1, 4, 1])
-        with col_d2:
+        with col_reorden_izq:
+            st.markdown("<p style='text-align: center;'><strong>1. Criterio de Ordenamiento (Nodos)</strong></p>", unsafe_allow_html=True)
+            detalles_orden = pd.DataFrame({
+                "Nuevo Orden": [i + 1 for i in range(num_nodos)],
+                "Nodo": [nombre_nodo(i) for i in orden],
+                "Cantidad de 1s": [cantidades[i] for i in orden]
+            })
             st.table(detalles_orden.style.hide(axis="index").set_properties(**{'text-align': 'center'}))
         
-        st.markdown("**Matriz de Caminos Reordenada (Bloques Diagonales):**")
-        etiquetas_ordenadas = [nombre_nodo(i) for i in orden]
-        df_reordenada = pd.DataFrame(st.session_state['matriz_ordenada'], index=etiquetas_ordenadas, columns=etiquetas_ordenadas)
-        
-        def resaltar_bloques_diagonales(df):
-            estilos = pd.DataFrame('', index=df.index, columns=df.columns)
-            for fila in df.index:
-                for col in df.columns:
-                    if df.loc[fila, col] == 1 and df.loc[col, fila] == 1:
-                        estilos.loc[fila, col] = 'background-color: #2e7d32; color: white;'
-            return estilos
+        with col_reorden_der:
+            st.markdown("<p style='text-align: center;'><strong>2. Matriz de Caminos Reordenada (Bloques)</strong></p>", unsafe_allow_html=True)
+            etiquetas_ordenadas = [nombre_nodo(i) for i in orden]
+            df_reordenada = pd.DataFrame(st.session_state['matriz_ordenada'], index=etiquetas_ordenadas, columns=etiquetas_ordenadas)
             
-        col_f1, col_f2, col_f3 = st.columns([1, 4, 1])
-        with col_f2:
+            def resaltar_bloques_diagonales(df):
+                estilos = pd.DataFrame('', index=df.index, columns=df.columns)
+                for fila in df.index:
+                    for col in df.columns:
+                        if df.loc[fila, col] == 1 and df.loc[col, fila] == 1:
+                            estilos.loc[fila, col] = 'background-color: #2e7d32; color: white;'
+                return estilos
+                
             st.table(df_reordenada.style.apply(resaltar_bloques_diagonales, axis=None).set_properties(**{'text-align': 'center'}))
         
         st.markdown("---")
         
-        # ====== NUEVA ESTRUCTURA EN DOS COLUMNAS ======
-        # col_izq ocupará el 30% del espacio, col_der el 70%
+        # ====== ESTRUCTURA EN DOS COLUMNAS FINAL ======
         col_izq, col_der = st.columns([1.2, 2.8])
         
         with col_izq:
