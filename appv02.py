@@ -7,6 +7,30 @@ import pandas as pd
 # Configuración principal de la página web
 st.set_page_config(page_title="Componentes Conexas", layout="wide")
 
+# ==========================================
+# CSS PERSONALIZADO PARA OPTIMIZAR ESPACIOS
+# ==========================================
+st.markdown("""
+<style>
+    /* Reducir tamaño de fuente en st.info (Reporte en pantalla) */
+    .stAlert p {
+        font-size: 14px !important;
+    }
+    
+    /* Ajustar las tablas de Streamlit (Dataframes y Data Editors) */
+    div[data-testid="stDataFrame"] {
+        max-width: 800px; /* Evita que la tabla ocupe todo el ancho */
+        margin: 0 auto;   /* Centra la tabla */
+    }
+    
+    /* Ajustes adicionales para centrar contenedores si es necesario */
+    .centrar-contenido {
+        display: flex;
+        justify-content: center;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Título y descripción de la interfaz
 st.title("🧩 Análisis de Componentes Conexas")
 st.markdown("Cálculo de matriz de caminos mediante el **Algoritmo de Warshall** para grafos dirigidos.")
@@ -95,7 +119,8 @@ def encontrar_componentes(caminos):
 
 def mostrar_grafos_comparativos(matriz, componentes):
     n = len(matriz)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    # Se reduce el tamaño de la figura de (14, 6) a (10, 4.5)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.5))
     pos = {}
     mapa_comp = {}
     
@@ -117,9 +142,10 @@ def mostrar_grafos_comparativos(matriz, componentes):
                              arrowprops=dict(arrowstyle="->", connectionstyle=f"arc3,rad={curva}", linewidth=1.5, shrinkA=18, shrinkB=18, color="#1976D2"))
 
     for i in range(n):
-        ax1.scatter(pos[i][0], pos[i][1], s=900, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
-        ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=12, fontweight="bold", zorder=3)
-    ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold")
+        # Se reduce el tamaño de los nodos de s=900 a s=600
+        ax1.scatter(pos[i][0], pos[i][1], s=600, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
+        ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=10, fontweight="bold", zorder=3)
+    ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold", fontsize=11)
     ax1.axis("off")
 
     # --- GRAFO 2: COMPONENTES CONEXAS ---
@@ -131,9 +157,10 @@ def mostrar_grafos_comparativos(matriz, componentes):
                              arrowprops=dict(arrowstyle="->", connectionstyle=f"arc3,rad={curva}", linewidth=1.5, shrinkA=18, shrinkB=18, color="#2E7D32"))
 
     for i in range(n):
-        ax2.scatter(pos[i][0], pos[i][1], s=900, edgecolors="#1B5E20", facecolor="white", linewidths=2, zorder=2)
-        ax2.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=12, fontweight="bold", zorder=3)
-    ax2.set_title("Componentes Fuertemente Conexas", fontweight="bold")
+        # Se reduce el tamaño de los nodos de s=900 a s=600
+        ax2.scatter(pos[i][0], pos[i][1], s=600, edgecolors="#1B5E20", facecolor="white", linewidths=2, zorder=2)
+        ax2.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=10, fontweight="bold", zorder=3)
+    ax2.set_title("Componentes Fuertemente Conexas", fontweight="bold", fontsize=11)
     ax2.axis("off")
 
     plt.tight_layout()
@@ -168,11 +195,9 @@ def generar_aleatorio(n):
 # ==========================================
 # GESTIÓN DE ESTADO (RESET AL CAMBIAR TAMAÑO)
 # ==========================================
-# 1. Aseguramos que reset_count SIEMPRE exista
 if 'reset_count' not in st.session_state:
     st.session_state['reset_count'] = 0
 
-# 2. Reseteo general al cambiar la cantidad de nodos
 if 'ultimo_n' not in st.session_state or st.session_state['ultimo_n'] != num_nodos:
     st.session_state['ultimo_n'] = num_nodos
     st.session_state['matriz'] = np.zeros((num_nodos, num_nodos), dtype=int)
@@ -195,40 +220,39 @@ if tipo_generacion == "Generación Aleatoria":
         
     df_matriz = pd.DataFrame(st.session_state['matriz'], index=etiquetas, columns=etiquetas)
     st.markdown("**Matriz de Adyacencia Inicial:**")
-    st.dataframe(df_matriz)
+    st.dataframe(df_matriz, use_container_width=False, width=700) # Control de ancho
 
 elif tipo_generacion == "Generación Manual":
     st.subheader("✍️ Generación Manual Interactiva")
     
-    # Botón de reset infalible
     if st.button("🧹 Limpiar Matriz"):
         st.session_state['matriz'] = np.zeros((num_nodos, num_nodos), dtype=int)
         st.session_state['calculado'] = False
         st.session_state['paso'] = 0
-        # Cambiamos la llave dinámica para destruir la memoria visual de la tabla
         st.session_state['reset_count'] += 1
         st.rerun()
 
-    st.markdown("Marca las casillas donde exista una conexión directa (**Fila** $\\to$ **Columna**).")
+    st.markdown("Marca las casillas donde exista una conexión directa (**Fila** $\to$ **Columna**).")
 
     df_base = pd.DataFrame(st.session_state['matriz'].astype(bool), index=etiquetas, columns=etiquetas)
     
-    # Forzar a Streamlit a tratar las celdas estrictamente como casillas de verificación
     config_columnas = {
         nodo: st.column_config.CheckboxColumn(nodo, required=True) 
         for nodo in etiquetas
     }
 
-    # Llave dinámica: cada vez que se limpia, la tabla nace de nuevo
     llave_dinamica = f"editor_manual_{num_nodos}_{st.session_state['reset_count']}"
     
-    df_editado = st.data_editor(
-        df_base, 
-        key=llave_dinamica,
-        column_config=config_columnas
-    )
+    # Envolver en columnas para centrar visualmente y restringir ancho
+    col_espacio1, col_tabla, col_espacio2 = st.columns([1, 4, 1])
+    with col_tabla:
+        df_editado = st.data_editor(
+            df_base, 
+            key=llave_dinamica,
+            column_config=config_columnas,
+            use_container_width=True # Se adapta a la columna central (más pequeña)
+        )
     
-    # Guardamos los cambios
     matriz_manual = df_editado.astype(int).to_numpy().copy()
     np.fill_diagonal(matriz_manual, 0)      
     st.session_state['matriz'] = matriz_manual
@@ -245,17 +269,14 @@ if 'paso' not in st.session_state:
 if st.button("🚀 Iniciar Cálculo de Warshall"):
     matriz_actual = st.session_state['matriz'].copy()
     
-    # 1. Historial de Warshall
     st.session_state['historial'] = warshall_con_historial(matriz_actual)
     matriz_final = st.session_state['historial'][-1]
     
-    # 2. Reordenamiento
     matriz_ordenada, orden, cantidades = ordenar_matriz(matriz_final)
     st.session_state['orden'] = orden
     st.session_state['cantidades'] = cantidades
     st.session_state['matriz_ordenada'] = matriz_ordenada
     
-    # 3. Componentes
     st.session_state['componentes'] = encontrar_componentes(matriz_final)
     st.session_state['paso'] = 0
     st.session_state['calculado'] = True
@@ -265,7 +286,6 @@ if st.session_state['calculado']:
     paso_actual = st.session_state['paso']
     max_pasos = len(historial) - 1
     
-    # Navegación
     col1, col2, col3 = st.columns([1, 2, 1])
     with col1:
         if st.button("⬅️ Anterior") and paso_actual > 0:
@@ -282,7 +302,10 @@ if st.session_state['calculado']:
             st.rerun()
 
     df_paso = pd.DataFrame(historial[paso_actual], index=etiquetas, columns=etiquetas)
-    st.dataframe(df_paso)
+    # Restringir el ancho de la matriz del historial
+    col_p1, col_p2, col_p3 = st.columns([1, 4, 1])
+    with col_p2:
+        st.dataframe(df_paso, use_container_width=True)
 
     if paso_actual == max_pasos:
         st.success(f"¡Análisis completado! Se detectaron {len(st.session_state['componentes'])} componentes fuertemente conexas.")
@@ -297,7 +320,10 @@ if st.session_state['calculado']:
             "Nodo": [nombre_nodo(i) for i in orden],
             "Cantidad de 1s": [cantidades[i] for i in orden]
         })
-        st.dataframe(detalles_orden, hide_index=True)
+        # Restringir ancho de tabla de detalles
+        col_d1, col_d2, col_d3 = st.columns([1, 4, 1])
+        with col_d2:
+            st.dataframe(detalles_orden, hide_index=True, use_container_width=True)
         
         st.markdown("**Matriz de Caminos Reordenada (Bloques Diagonales):**")
         etiquetas_ordenadas = [nombre_nodo(i) for i in orden]
@@ -311,11 +337,16 @@ if st.session_state['calculado']:
                         estilos.loc[fila, col] = 'background-color: #2e7d32; color: white'
             return estilos
             
-        st.dataframe(df_reordenada.style.apply(resaltar_bloques_diagonales, axis=None))
+        # Restringir ancho de matriz final
+        col_f1, col_f2, col_f3 = st.columns([1, 4, 1])
+        with col_f2:
+            st.dataframe(df_reordenada.style.apply(resaltar_bloques_diagonales, axis=None), use_container_width=True)
         
         st.markdown("---")
         st.markdown("### 📋 Reporte en Pantalla")
         texto_reporte = generar_texto_reporte(st.session_state['componentes'])
+        
+        # El tamaño del texto se ajusta mediante el CSS definido al inicio
         st.info(texto_reporte.replace('\n', '  \n')) 
         
         st.download_button(
@@ -327,4 +358,7 @@ if st.session_state['calculado']:
         
         st.markdown("**Representación Gráfica:**")
         fig = mostrar_grafos_comparativos(st.session_state['matriz'], st.session_state['componentes'])
-        st.pyplot(fig)
+        # Mostrar la figura centrada
+        col_g1, col_g2, col_g3 = st.columns([1, 6, 1])
+        with col_g2:
+            st.pyplot(fig)
