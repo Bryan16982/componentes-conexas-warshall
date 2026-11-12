@@ -116,6 +116,7 @@ def mostrar_grafos_comparativos(matriz, componentes):
             pos[nodo] = (cx + np.cos(angulos[i]) * radio, cy + np.sin(angulos[i]) * radio)
             mapa_comp[nodo] = c_idx
 
+    # --- GRAFO 1: ORIGINAL ---
     for i in range(n):
         for j in range(n):
             if i != j and matriz[i][j] == 1:
@@ -125,9 +126,12 @@ def mostrar_grafos_comparativos(matriz, componentes):
     for i in range(n):
         ax1.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
         ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
-    ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold", fontsize=13)
+    
+    ax1.margins(0.2) # <-- SOLUCION AL CORTE DE NODOS
+    ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold", fontsize=11) # <-- SOLUCION AL TRASLAPE
     ax1.axis("off")
 
+    # --- GRAFO 2: COMPONENTES CONEXAS ---
     for i in range(n):
         for j in range(n):
             if i != j and matriz[i][j] == 1 and mapa_comp.get(i) == mapa_comp.get(j):
@@ -137,9 +141,12 @@ def mostrar_grafos_comparativos(matriz, componentes):
     for i in range(n):
         ax2.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#1B5E20", facecolor="white", linewidths=2, zorder=2)
         ax2.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
-    ax2.set_title("Componentes Fuertemente Conexas", fontweight="bold", fontsize=13)
+    
+    ax2.margins(0.2) # <-- SOLUCION AL CORTE DE NODOS
+    ax2.set_title("Componentes Fuertemente Conexas", fontweight="bold", fontsize=11) # <-- SOLUCION AL TRASLAPE
     ax2.axis("off")
-    plt.tight_layout()
+    
+    plt.tight_layout(pad=2.0) # Añade un poco más de separación general
     return fig
 
 def generar_aleatorio(n):
