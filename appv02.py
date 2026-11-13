@@ -63,17 +63,23 @@ st.markdown('''
 st.title("🧩 Análisis de Componentes Conexas")
 st.markdown("Cálculo de matriz de caminos mediante el **Algoritmo de Warshall** para grafos dirigidos.")
 
-# --- NUEVO: SECCIÓN HISTÓRICA SECUNDARIA (EXPANDER) ---
+# --- SECCIÓN HISTÓRICA CON FOTO DE WARSHALL ---
 with st.expander("ℹ️ ¿Quién fue Warshall y qué es la Cerradura Transitiva?"):
-    st.markdown("""
-    **Stephen Warshall (1935 – 2006)** fue un destacado investigador y científico de la computación estadounidense. En 1962, publicó este elegante algoritmo que revolucionó la forma de encontrar conectividad en grandes redes de datos.
-    
-    **¿Qué es la Cerradura Transitiva?**
-    Es el principio matemático de deducir rutas indirectas. En términos sencillos: si puedes ir del nodo **A** al **B**, y del **B** al **C**, entonces existe un camino (indirecto) de **A** hacia **C**. 
-    
-    El algoritmo de Warshall evalúa estas combinaciones paso a paso para transformar nuestra *Matriz de Adyacencia* (conexiones directas) en una *Matriz de Caminos* (conectividad total o cerradura transitiva).
-    """)
-# -------------------------------------------------------
+    col_txt, col_img = st.columns([3, 1])
+    with col_txt:
+        texto_historia = (
+            "**Stephen Warshall (1935 – 2006)** fue un destacado investigador y científico de la computación "
+            "estadounidense. En 1962, publicó este elegante algoritmo que revolucionó la forma de encontrar "
+            "conectividad en grandes redes de datos.\n\n"
+            "**¿Qué es la Cerradura Transitiva?**\n"
+            "Es el principio matemático de deducir rutas indirectas. En términos sencillos: si puedes ir del nodo "
+            "**A** al **B**, y del **B** al **C**, entonces existe un camino (indirecto) de **A** hacia **C**.\n\n"
+            "El algoritmo de Warshall evalúa estas combinaciones iterativamente para transformar nuestra "
+            "*Matriz de Adyacencia* (conexiones directas) en una *Matriz de Caminos* (conectividad total o cerradura transitiva)."
+        )
+        st.markdown(texto_historia)
+    with col_img:
+        st.image("https://upload.wikimedia.org/wikipedia/en/2/23/Stephen_Warshall.jpg", caption="Stephen Warshall", use_container_width=True)
 
 # Panel lateral
 st.sidebar.header("⚙️ Configuración del Grafo")
@@ -136,24 +142,28 @@ def encontrar_componentes(caminos):
     return componentes
 
 # ==========================================
-# NUEVA FUNCIÓN DE GRAFOS INTERACTIVOS FLEXIBLES (PyVis)
+# GRAFOS INTERACTIVOS FLEXIBLES CORREGIDOS (Letras dentro, sin reacomodo elástico)
 # ==========================================
 def mostrar_grafo_interactivo(matriz, componentes=None, tipo="inicial", height="350px"):
     n = len(matriz)
     net = Network(directed=True, height=height, width="100%", bgcolor="transparent")
     
-    # Opciones físicas para que el grafo flote y sea arrastrable de forma fluida
+    # 1. DESACTIVAR FÍSICA para que el grafo no se rompa ni rebote al arrastrar un nodo
+    net.toggle_physics(False)
+    
+    # 2. CONFIGURAR 'shape': 'circle' para que las letras vayan DENTRO del círculo
     net.set_options('''
     var options = {
       "nodes": {
+        "shape": "circle",
         "borderWidth": 2.5,
-        "size": 22,
+        "size": 25,
         "color": {
           "background": "white"
         },
         "font": {
           "color": "black",
-          "size": 16,
+          "size": 18,
           "face": "sans-serif",
           "bold": true
         }
@@ -166,40 +176,45 @@ def mostrar_grafo_interactivo(matriz, componentes=None, tipo="inicial", height="
           "type": "curvedCW",
           "roundness": 0.2
         }
-      },
-      "physics": {
-        "barnesHut": {
-          "gravitationalConstant": -2000,
-          "centralGravity": 0.3,
-          "springLength": 150
-        },
-        "minVelocity": 0.75
       }
     }
     ''')
 
-    # Identificar a qué componente pertenece cada nodo (si estamos en el grafo comparativo final)
     mapa_comp = {}
     if componentes:
         for c_idx, comp in enumerate(componentes):
             for nodo in comp:
                 mapa_comp[nodo] = c_idx
 
-    # 1. Añadir Nodos
+    # Añadir Nodos (Generamos las posiciones x, y estáticas para que formen un círculo)
+    angulos_totales = np.linspace(0, 2 * np.pi, n, endpoint=False)
     for i in range(n):
         if tipo == "componentes" and componentes:
-            color_border = "#1B5E20" # Verde oscuro
-            color_hover = "#2E7D32"  # Verde brillante
+            color_border = "#1B5E20" 
+            color_hover = "#2E7D32"  
+            c_idx = mapa_comp[i]
+            comp = componentes[c_idx]
+            idx_in_comp = comp.index(i)
+            angulos_comp = np.linspace(0, 2 * np.pi, len(comp), endpoint=False)
+            radio = 80 if len(comp) > 1 else 0
+            cx = c_idx * 200 - ((len(componentes)-1)*100) 
+            x = int(cx + np.cos(angulos_comp[idx_in_comp]) * radio)
+            y = int(np.sin(angulos_comp[idx_in_comp]) * radio)
         else:
-            color_border = "#0D47A1" # Azul oscuro
-            color_hover = "#1976D2"  # Azul brillante
+            color_border = "#0D47A1" 
+            color_hover = "#1976D2"  
+            radio = 130
+            x = int(np.cos(angulos_totales[i]) * radio)
+            y = int(np.sin(angulos_totales[i]) * radio)
             
-        net.add_node(i, label=nombre_nodo(i), 
+        # Al desactivar física, pasar x e y coloca el nodo exactamente donde queremos.
+        # Desde ahí el usuario puede arrastrarlo sin estropear nada más.
+        net.add_node(i, label=nombre_nodo(i), x=x, y=y,
                      color={"border": color_border, "background": "white",
                             "highlight": {"border": "#F59E0B", "background": "white"},
                             "hover": {"border": color_hover, "background": "white"}})
 
-    # 2. Añadir Aristas (Flechas)
+    # Añadir Aristas (Flechas)
     for i in range(n):
         for j in range(n):
             if i != j and matriz[i][j] == 1:
@@ -208,11 +223,9 @@ def mostrar_grafo_interactivo(matriz, componentes=None, tipo="inicial", height="
                 if tipo == "componentes":
                     if es_misma_comp:
                         net.add_edge(i, j, color="#2E7D32", width=2, arrows="to")
-                    # No dibujamos aristas entre distintas componentes en el gráfico final (tal como tenías)
                 else:
                     net.add_edge(i, j, color="#1976D2", width=2, arrows="to")
                     
-    # Renderizado seguro en Streamlit
     tmp_dir = tempfile.gettempdir()
     tmp_path = os.path.join(tmp_dir, f"grafo_{random.randint(1000, 99999)}.html")
     net.save_graph(tmp_path)
@@ -220,7 +233,6 @@ def mostrar_grafo_interactivo(matriz, componentes=None, tipo="inicial", height="
     with open(tmp_path, "r", encoding="utf-8") as f:
         html_data = f.read()
     
-    # Renderizamos el HTML interactivo dentro del contenedor de Streamlit
     components.html(html_data, height=int(height.replace("px", "")) + 15)
 
 def generar_aleatorio(n):
@@ -374,7 +386,8 @@ if st.session_state['calculado']:
         st.table(df_paso.style.apply(aplicar_colores_basicos, axis=None))
 
     if paso_actual == max_pasos:
-        st.success(f"¡Listo! Se ha hallado la Cerradura Transitiva. A partir de esta, se detectaron {len(st.session_state['componentes'])} componentes fuertemente conexas.")
+        # --- MENSAJE CORREGIDO PARA EXPLICAR LA CERRADURA TRANSITIVA ---
+        st.success(f"¡Listo! Se ha hallado la **Cerradura Transitiva**. A partir de esta, se detectaron {len(st.session_state['componentes'])} componentes fuertemente conexas.")
         
         st.markdown("---")
         st.markdown("### 🔄 Reordenamiento de Filas y Columnas")
