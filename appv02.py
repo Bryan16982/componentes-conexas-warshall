@@ -79,7 +79,7 @@ with st.expander("ℹ️ ¿Quién fue Warshall y qué es la Cerradura Transitiva
         )
         st.markdown(texto_historia)
     with col_img:
-        st.image("https://upload.wikimedia.org/wikipedia/en/2/23/Stephen_Warshall.jpg", caption="Stephen Warshall", use_container_width=True)
+        st.image("https://commons.wikimedia.org/wiki/Special:FilePath/S_Warshall.jpg", caption="Stephen Warshall", use_container_width=True)
 
 # Panel lateral
 st.sidebar.header("⚙️ Configuración del Grafo")
