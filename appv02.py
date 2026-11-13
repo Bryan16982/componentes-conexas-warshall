@@ -34,7 +34,7 @@ st.markdown('''
         border: 2px solid #888888 !important; 
     }
     
-    /* COLORES PARA LOS ENCABEZADOS (LETRAS DE LOS NODOS) */
+    /* COLORES CHEVERES PARA LOS ENCABEZADOS (LETRAS DE LOS NODOS) */
     .stTable th {
         color: #F59E0B !important; /* Color Ambar/Dorado brillante */
         background-color: rgba(128, 128, 128, 0.15) !important; /* Fondo sutil para separarlo de los números */
@@ -120,6 +120,36 @@ def encontrar_componentes(caminos):
             componentes.append(comp)
     return componentes
 
+# NUEVA FUNCIÓN: Mostrar solo el grafo inicial en forma circular
+def mostrar_grafo_individual(matriz):
+    n = len(matriz)
+    fig, ax1 = plt.subplots(figsize=(6, 5))
+    pos = {}
+    
+    # Distribución circular simple
+    angulos = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    for i in range(n):
+        pos[i] = (np.cos(angulos[i]), np.sin(angulos[i]))
+
+    # Dibujar flechas
+    for i in range(n):
+        for j in range(n):
+            if i != j and matriz[i][j] == 1:
+                curva = 0.15 if matriz[j][i] == 1 and i < j else (-0.15 if matriz[j][i] == 1 else 0)
+                ax1.annotate("", xy=pos[j], xytext=pos[i],
+                             arrowprops=dict(arrowstyle="->", connectionstyle=f"arc3,rad={curva}", linewidth=1.5, shrinkA=18, shrinkB=18, color="#1976D2"))
+    
+    # Dibujar nodos
+    for i in range(n):
+        ax1.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
+        ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
+    
+    ax1.margins(0.2) 
+    ax1.set_title("Grafo Dirigido Inicial", fontweight="bold", fontsize=11) 
+    ax1.axis("off")
+    plt.tight_layout()
+    return fig
+
 def mostrar_grafos_comparativos(matriz, componentes):
     n = len(matriz)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
@@ -197,19 +227,16 @@ def aplicar_colores_basicos(df):
     for fila in df.index:
         for col in df.columns:
             if df.loc[fila, col] == 1:
-                # Azul claro brillante para los 1s
                 estilos.loc[fila, col] = 'color: #38BDF8; font-weight: bold;'
             else:
-                # Gris apagado para los 0s
                 estilos.loc[fila, col] = 'color: #64748B;'
     return estilos
 
 def aplicar_colores_detalles(df):
     estilos = pd.DataFrame('', index=df.index, columns=df.columns)
     for fila in df.index:
-        estilos.loc[fila, 'Nuevo Orden'] = 'color: #A78BFA; font-weight: bold;' # Morado claro
-        estilos.loc[fila, 'Nodo'] = 'color: #F59E0B; font-weight: bold;' # Ambar
-        estilos.loc[fila, 'Cantidad de 1s'] = 'color: #38BDF8; font-weight: bold;' # Azul claro
+        estilos.loc[fila, 'Nuevo Orden'] = 'color: #F59E0B; font-weight: bold;' 
+        estilos.loc[fila, 'Cantidad de 1s'] = 'color: #38BDF8; font-weight: bold;' 
     return estilos
 
 # GESTIÓN DE ESTADO
@@ -232,10 +259,18 @@ if tipo_generacion == "Generación Aleatoria":
         st.session_state['paso'] = 0
         
     df_matriz = pd.DataFrame(st.session_state['matriz'], index=etiquetas, columns=etiquetas)
-    st.markdown("**Matriz de Adyacencia Inicial:**")
-    col1, col_t, col2 = st.columns([1, 4, 1])
-    with col_t:
+    
+    # --- NUEVO LAYOUT: Matriz a la Izquierda, Grafo a la Derecha ---
+    col_mat_izq, col_graf_der = st.columns([1.2, 1.8])
+    
+    with col_mat_izq:
+        st.markdown("**Matriz de Adyacencia Inicial:**")
         st.table(df_matriz.style.apply(aplicar_colores_basicos, axis=None))
+        
+    with col_graf_der:
+        st.markdown("**Visualización del Grafo:**")
+        fig_inicial = mostrar_grafo_individual(st.session_state['matriz'])
+        st.pyplot(fig_inicial)
 
 elif tipo_generacion == "Generación Manual":
     st.subheader("✍️ Generación Manual Interactiva")
@@ -324,8 +359,7 @@ if st.session_state['calculado']:
         with col_reorden_izq:
             st.markdown("<p style='text-align: center;'><strong>1. Criterio de Ordenamiento (Nodos)</strong></p>", unsafe_allow_html=True)
             detalles_orden = pd.DataFrame({
-                "Nuevo Orden": [i + 1 for i in range(num_nodos)],
-                "Nodo": [nombre_nodo(i) for i in orden],
+                "Nuevo Orden": [nombre_nodo(i) for i in orden],
                 "Cantidad de 1s": [cantidades[i] for i in orden]
             })
             st.table(detalles_orden.style.hide(axis="index").apply(aplicar_colores_detalles, axis=None))
@@ -341,13 +375,10 @@ if st.session_state['calculado']:
                     for col in df.columns:
                         val = df.loc[fila, col]
                         if val == 1 and df.loc[col, fila] == 1:
-                            # Mantiene intacto el verde para los bloques
                             estilos.loc[fila, col] = 'background-color: #2e7d32; color: white; font-weight: bold;'
                         elif val == 1:
-                            # 1s fuera de los bloques (azul brillante)
                             estilos.loc[fila, col] = 'color: #38BDF8; font-weight: bold;'
                         else:
-                            # 0s normales (gris oscuro)
                             estilos.loc[fila, col] = 'color: #64748B;'
                 return estilos
                 
