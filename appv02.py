@@ -112,16 +112,11 @@ def warshall_con_historial(matriz):
     return historial
 
 def generar_texto_reporte(componentes):
-    texto = "**REPORTE FINAL DE COMPONENTES CONEXAS**
-
-"
-    texto += f"Número total de componentes conexas: {len(componentes)}
-
-"
+    texto = "**REPORTE FINAL DE COMPONENTES CONEXAS**\n\n"
+    texto += f"Número total de componentes conexas: {len(componentes)}\n\n"
     for i, componente in enumerate(componentes, start=1):
         nombres = [nombre_nodo(nodo) for nodo in sorted(componente)]
-        texto += f"Componente {i}: {{ " + ", ".join(nombres) + " }
-"
+        texto += f"Componente {i}: {{ " + ", ".join(nombres) + " }\n"
     return texto
 
 def ordenar_matriz(caminos):
