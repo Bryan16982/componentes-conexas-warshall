@@ -374,7 +374,7 @@ if st.session_state['calculado']:
         st.table(df_paso.style.apply(aplicar_colores_basicos, axis=None))
 
     if paso_actual == max_pasos:
-        st.success(f"¡Análisis completado! Se detectaron {len(st.session_state['componentes'])} componentes fuertemente conexas.")
+        st.success(f"¡Listo! Se ha hallado la Cerradura Transitiva. A partir de esta, se detectaron {len(st.session_state['componentes'])} componentes fuertemente conexas.")
         
         st.markdown("---")
         st.markdown("### 🔄 Reordenamiento de Filas y Columnas")
