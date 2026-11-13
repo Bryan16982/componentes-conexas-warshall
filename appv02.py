@@ -55,6 +55,13 @@ st.markdown('''
     div[data-testid="stDataFrame"] > div {
         border: 2px solid #888888 !important;
     }
+    
+    /* REDUCIR TAMAÑO Y CENTRAR LA IMAGEN DE WARSHALL */
+    div[data-testid="stImage"] img {
+        max-width: 250px !important; 
+        margin: 0 auto !important;
+        display: block !important;
+    }
 
 </style>
 ''', unsafe_allow_html=True)
@@ -70,16 +77,22 @@ with st.expander("ℹ️ ¿Quién fue Warshall y qué es la Cerradura Transitiva
         texto_historia = (
             "**Stephen Warshall (1935 – 2006)** fue un destacado investigador y científico de la computación "
             "estadounidense. En 1962, publicó este elegante algoritmo que revolucionó la forma de encontrar "
-            "conectividad en grandes redes de datos.\n\n"
-            "**¿Qué es la Cerradura Transitiva?**\n"
+            "conectividad en grandes redes de datos.
+
+"
+            "**¿Qué es la Cerradura Transitiva?**
+"
             "Es el principio matemático de deducir rutas indirectas. En términos sencillos: si puedes ir del nodo "
-            "**A** al **B**, y del **B** al **C**, entonces existe un camino (indirecto) de **A** hacia **C**.\n\n"
+            "**A** al **B**, y del **B** al **C**, entonces existe un camino (indirecto) de **A** hacia **C**.
+
+"
             "El algoritmo de Warshall evalúa estas combinaciones iterativamente para transformar nuestra "
             "*Matriz de Adyacencia* (conexiones directas) en una *Matriz de Caminos* (conectividad total o cerradura transitiva)."
         )
         st.markdown(texto_historia)
     with col_img:
-        st.image("https://commons.wikimedia.org/wiki/Special:FilePath/S_Warshall.jpg", caption="Stephen Warshall", use_container_width=True)
+        # Quitamos use_container_width=True para que aplique nuestro max-width de CSS
+        st.image("https://commons.wikimedia.org/wiki/Special:FilePath/S_Warshall.jpg", caption="Stephen Warshall")
 
 # Panel lateral
 st.sidebar.header("⚙️ Configuración del Grafo")
@@ -107,11 +120,16 @@ def warshall_con_historial(matriz):
     return historial
 
 def generar_texto_reporte(componentes):
-    texto = "**REPORTE FINAL DE COMPONENTES CONEXAS**\n\n"
-    texto += f"Número total de componentes conexas: {len(componentes)}\n\n"
+    texto = "**REPORTE FINAL DE COMPONENTES CONEXAS**
+
+"
+    texto += f"Número total de componentes conexas: {len(componentes)}
+
+"
     for i, componente in enumerate(componentes, start=1):
         nombres = [nombre_nodo(nodo) for nodo in sorted(componente)]
-        texto += f"Componente {i}: {{ " + ", ".join(nombres) + " }\n"
+        texto += f"Componente {i}: {{ " + ", ".join(nombres) + " }
+"
     return texto
 
 def ordenar_matriz(caminos):
@@ -298,7 +316,6 @@ if tipo_generacion == "Generación Aleatoria":
         
     df_matriz = pd.DataFrame(st.session_state['matriz'], index=etiquetas, columns=etiquetas)
     
-    # --- LAYOUT ALEATORIO: Matriz Izq / Grafo Der ---
     col_mat_izq, col_graf_der = st.columns([1.2, 1.8])
     with col_mat_izq:
         st.markdown("**Matriz de Adyacencia Inicial:**")
@@ -316,7 +333,6 @@ elif tipo_generacion == "Generación Manual":
         st.session_state['reset_count'] += 1
         st.rerun()
 
-    # --- LAYOUT MANUAL: Matriz Izq / Grafo Der ---
     col_mat_izq, col_graf_der = st.columns([1.2, 1.8])
     
     with col_mat_izq:
@@ -386,7 +402,6 @@ if st.session_state['calculado']:
         st.table(df_paso.style.apply(aplicar_colores_basicos, axis=None))
 
     if paso_actual == max_pasos:
-        # --- MENSAJE CORREGIDO PARA EXPLICAR LA CERRADURA TRANSITIVA ---
         st.success(f"¡Listo! Se ha hallado la **Cerradura Transitiva**. A partir de esta, se detectaron {len(st.session_state['componentes'])} componentes fuertemente conexas.")
         
         st.markdown("---")
