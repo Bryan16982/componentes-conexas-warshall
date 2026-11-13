@@ -74,25 +74,17 @@ st.markdown("Cálculo de matriz de caminos mediante el **Algoritmo de Warshall**
 with st.expander("ℹ️ ¿Quién fue Warshall y qué es la Cerradura Transitiva?"):
     col_txt, col_img = st.columns([3, 1])
     with col_txt:
-        texto_historia = (
-            "**Stephen Warshall (1935 – 2006)** fue un destacado investigador y científico de la computación "
-            "estadounidense. En 1962, publicó este elegante algoritmo que revolucionó la forma de encontrar "
-            "conectividad en grandes redes de datos.
-
-"
-            "**¿Qué es la Cerradura Transitiva?**
-"
-            "Es el principio matemático de deducir rutas indirectas. En términos sencillos: si puedes ir del nodo "
-            "**A** al **B**, y del **B** al **C**, entonces existe un camino (indirecto) de **A** hacia **C**.
-
-"
-            "El algoritmo de Warshall evalúa estas combinaciones iterativamente para transformar nuestra "
-            "*Matriz de Adyacencia* (conexiones directas) en una *Matriz de Caminos* (conectividad total o cerradura transitiva)."
-        )
+        texto_historia = """
+        **Stephen Warshall (1935 – 2006)** fue un destacado investigador y científico de la computación estadounidense. En 1962, publicó este elegante algoritmo que revolucionó la forma de encontrar conectividad en grandes redes de datos.
+        
+        **¿Qué es la Cerradura Transitiva?**
+        Es el principio matemático de deducir rutas indirectas. En términos sencillos: si puedes ir del nodo **A** al **B**, y del **B** al **C**, entonces existe un camino (indirecto) de **A** hacia **C**.
+        
+        El algoritmo de Warshall evalúa estas combinaciones iterativamente para transformar nuestra *Matriz de Adyacencia* (conexiones directas) en una *Matriz de Caminos* (conectividad total o cerradura transitiva).
+        """
         st.markdown(texto_historia)
     with col_img:
-        # Quitamos use_container_width=True para que aplique nuestro max-width de CSS
-        st.image("https://commons.wikimedia.org/wiki/Special:FilePath/S_Warshall.jpg", caption="Stephen Warshall")
+        st.image("https://commons.wikimedia.org/wiki/Special:FilePath/S_Warshall.jpg", caption="Stephen Warshall", use_container_width=True)
 
 # Panel lateral
 st.sidebar.header("⚙️ Configuración del Grafo")
