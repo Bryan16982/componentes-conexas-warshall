@@ -8,7 +8,7 @@ import pandas as pd
 st.set_page_config(page_title="Componentes Conexas", layout="wide")
 
 # ==========================================
-# CSS PERSONALIZADO PARA OPTIMIZAR ESPACIOS Y CENTRAR
+# CSS PERSONALIZADO PARA OPTIMIZAR ESPACIOS Y BORDES
 # ==========================================
 st.markdown('''
 <style>
@@ -21,20 +21,35 @@ st.markdown('''
         margin-bottom: 0.2rem !important;
     }
     
-    /* CENTRAR TABLAS (st.table) y reducir espacios de celdas */
+    /* CENTRAR TABLAS (st.table), reducir espacios y aumentar bordes */
     .stTable {
         margin: 0 auto !important;
         width: auto !important;
+        border-collapse: collapse !important;
     }
+    /* Estilo de bordes más gruesos para celdas de las tablas normales */
     .stTable th, .stTable td {
         text-align: center !important;
         padding: 0.4rem 0.8rem !important;
+        border: 2px solid #888888 !important; /* Borde más grueso y visible en temas claros/oscuros */
     }
     
-    /* Centrar contenedor de la tabla interactiva (checkboxes) */
+    /* Centrar contenedor de la tabla interactiva (checkboxes) y añadir borde a sus celdas */
     div[data-testid="stDataFrame"] {
         margin: 0 auto;
     }
+    /* Streamlit data editor usa divs para las celdas, aplicamos bordes a esos divs internos */
+    div[data-testid="stDataFrame"] div[data-testid="StyledFullScreenButton"] {
+        display: none; /* Ocultar el botón de pantalla completa si molesta */
+    }
+    
+    /* Aumentar contraste y grosor de las líneas del data_editor (Glide Data Grid) 
+       Nota: Streamlit usa Canvas para el data editor, por lo que el CSS estricto a veces no afecta
+       las líneas internas, pero le aplicamos borde al contenedor. */
+    div[data-testid="stDataFrame"] > div {
+        border: 2px solid #888888 !important;
+    }
+
 </style>
 ''', unsafe_allow_html=True)
 
@@ -126,9 +141,9 @@ def mostrar_grafos_comparativos(matriz, componentes):
     for i in range(n):
         ax1.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
         ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
-    #--- SOLUCION AL CORTE DE NODOS ---
+    
     ax1.margins(0.2) 
-    ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold", fontsize=11) # <-- SOLUCION AL TRASLAPE
+    ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold", fontsize=11) 
     ax1.axis("off")
 
     # --- GRAFO 2: COMPONENTES CONEXAS ---
@@ -141,12 +156,12 @@ def mostrar_grafos_comparativos(matriz, componentes):
     for i in range(n):
         ax2.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#1B5E20", facecolor="white", linewidths=2, zorder=2)
         ax2.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
-    #--- SOLUCION AL CORTE DE NODOS ---
+    
     ax2.margins(0.2) 
-    ax2.set_title("Componentes Fuertemente Conexas", fontweight="bold", fontsize=11) # <-- SOLUCION AL TRASLAPE
+    ax2.set_title("Componentes Fuertemente Conexas", fontweight="bold", fontsize=11) 
     ax2.axis("off")
     
-    plt.tight_layout(pad=2.0) # Añade un poco más de separación general
+    plt.tight_layout(pad=2.0) 
     return fig
 
 def generar_aleatorio(n):
@@ -275,7 +290,6 @@ if st.session_state['calculado']:
         st.markdown("---")
         st.markdown("### 🔄 Reordenamiento de Filas y Columnas")
         
-        # ====== NUEVA ESTRUCTURA: TABLA A LA IZQ, MATRIZ A LA DER ======
         col_reorden_izq, col_reorden_der = st.columns([1.5, 2.5])
         
         orden = st.session_state['orden']
@@ -307,7 +321,6 @@ if st.session_state['calculado']:
         
         st.markdown("---")
         
-        # ====== ESTRUCTURA EN DOS COLUMNAS FINAL ======
         col_izq, col_der = st.columns([1.2, 2.8])
         
         with col_izq:
