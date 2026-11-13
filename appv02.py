@@ -8,7 +8,7 @@ import pandas as pd
 st.set_page_config(page_title="Componentes Conexas", layout="wide")
 
 # ==========================================
-# CSS PERSONALIZADO PARA OPTIMIZAR ESPACIOS Y BORDES
+# CSS PERSONALIZADO PARA OPTIMIZAR ESPACIOS, BORDES Y COLORES
 # ==========================================
 st.markdown('''
 <style>
@@ -31,21 +31,24 @@ st.markdown('''
     .stTable th, .stTable td {
         text-align: center !important;
         padding: 0.4rem 0.8rem !important;
-        border: 2px solid #888888 !important; /* Borde más grueso y visible en temas claros/oscuros */
+        border: 2px solid #888888 !important; 
+    }
+    
+    /* COLORES CHEVERES PARA LOS ENCABEZADOS (LETRAS DE LOS NODOS) */
+    .stTable th {
+        color: #F59E0B !important; /* Color Ambar/Dorado brillante */
+        background-color: rgba(128, 128, 128, 0.15) !important; /* Fondo sutil para separarlo de los números */
+        font-size: 16px !important;
+        font-weight: 900 !important;
     }
     
     /* Centrar contenedor de la tabla interactiva (checkboxes) y añadir borde a sus celdas */
     div[data-testid="stDataFrame"] {
         margin: 0 auto;
     }
-    /* Streamlit data editor usa divs para las celdas, aplicamos bordes a esos divs internos */
     div[data-testid="stDataFrame"] div[data-testid="StyledFullScreenButton"] {
-        display: none; /* Ocultar el botón de pantalla completa si molesta */
+        display: none; 
     }
-    
-    /* Aumentar contraste y grosor de las líneas del data_editor (Glide Data Grid) 
-       Nota: Streamlit usa Canvas para el data editor, por lo que el CSS estricto a veces no afecta
-       las líneas internas, pero le aplicamos borde al contenedor. */
     div[data-testid="stDataFrame"] > div {
         border: 2px solid #888888 !important;
     }
@@ -186,6 +189,29 @@ def generar_aleatorio(n):
             matriz[origen][destino] = 1
     return matriz
 
+# ==========================================
+# FUNCIONES DE COLOR PARA PANDAS STYLER
+# ==========================================
+def aplicar_colores_basicos(df):
+    estilos = pd.DataFrame('', index=df.index, columns=df.columns)
+    for fila in df.index:
+        for col in df.columns:
+            if df.loc[fila, col] == 1:
+                # Azul claro brillante para los 1s
+                estilos.loc[fila, col] = 'color: #38BDF8; font-weight: bold;'
+            else:
+                # Gris apagado para los 0s
+                estilos.loc[fila, col] = 'color: #64748B;'
+    return estilos
+
+def aplicar_colores_detalles(df):
+    estilos = pd.DataFrame('', index=df.index, columns=df.columns)
+    for fila in df.index:
+        estilos.loc[fila, 'Nuevo Orden'] = 'color: #A78BFA; font-weight: bold;' # Morado claro
+        estilos.loc[fila, 'Nodo'] = 'color: #F59E0B; font-weight: bold;' # Ambar
+        estilos.loc[fila, 'Cantidad de 1s'] = 'color: #38BDF8; font-weight: bold;' # Azul claro
+    return estilos
+
 # GESTIÓN DE ESTADO
 if 'reset_count' not in st.session_state:
     st.session_state['reset_count'] = 0
@@ -209,7 +235,7 @@ if tipo_generacion == "Generación Aleatoria":
     st.markdown("**Matriz de Adyacencia Inicial:**")
     col1, col_t, col2 = st.columns([1, 4, 1])
     with col_t:
-        st.table(df_matriz.style.set_properties(**{'text-align': 'center'}))
+        st.table(df_matriz.style.apply(aplicar_colores_basicos, axis=None))
 
 elif tipo_generacion == "Generación Manual":
     st.subheader("✍️ Generación Manual Interactiva")
@@ -282,7 +308,7 @@ if st.session_state['calculado']:
     df_paso = pd.DataFrame(historial[paso_actual], index=etiquetas, columns=etiquetas)
     col_p1, col_p2, col_p3 = st.columns([1, 4, 1])
     with col_p2:
-        st.table(df_paso.style.set_properties(**{'text-align': 'center'}))
+        st.table(df_paso.style.apply(aplicar_colores_basicos, axis=None))
 
     if paso_actual == max_pasos:
         st.success(f"¡Análisis completado! Se detectaron {len(st.session_state['componentes'])} componentes fuertemente conexas.")
@@ -302,7 +328,7 @@ if st.session_state['calculado']:
                 "Nodo": [nombre_nodo(i) for i in orden],
                 "Cantidad de 1s": [cantidades[i] for i in orden]
             })
-            st.table(detalles_orden.style.hide(axis="index").set_properties(**{'text-align': 'center'}))
+            st.table(detalles_orden.style.hide(axis="index").apply(aplicar_colores_detalles, axis=None))
         
         with col_reorden_der:
             st.markdown("<p style='text-align: center;'><strong>2. Matriz de Caminos Reordenada (Bloques)</strong></p>", unsafe_allow_html=True)
@@ -313,11 +339,19 @@ if st.session_state['calculado']:
                 estilos = pd.DataFrame('', index=df.index, columns=df.columns)
                 for fila in df.index:
                     for col in df.columns:
-                        if df.loc[fila, col] == 1 and df.loc[col, fila] == 1:
-                            estilos.loc[fila, col] = 'background-color: #2e7d32; color: white;'
+                        val = df.loc[fila, col]
+                        if val == 1 and df.loc[col, fila] == 1:
+                            # Mantiene intacto el verde para los bloques
+                            estilos.loc[fila, col] = 'background-color: #2e7d32; color: white; font-weight: bold;'
+                        elif val == 1:
+                            # 1s fuera de los bloques (azul brillante)
+                            estilos.loc[fila, col] = 'color: #38BDF8; font-weight: bold;'
+                        else:
+                            # 0s normales (gris oscuro)
+                            estilos.loc[fila, col] = 'color: #64748B;'
                 return estilos
                 
-            st.table(df_reordenada.style.apply(resaltar_bloques_diagonales, axis=None).set_properties(**{'text-align': 'center'}))
+            st.table(df_reordenada.style.apply(resaltar_bloques_diagonales, axis=None))
         
         st.markdown("---")
         
