@@ -63,6 +63,18 @@ st.markdown('''
 st.title("🧩 Análisis de Componentes Conexas")
 st.markdown("Cálculo de matriz de caminos mediante el **Algoritmo de Warshall** para grafos dirigidos.")
 
+# --- NUEVO: SECCIÓN HISTÓRICA SECUNDARIA (EXPANDER) ---
+with st.expander("ℹ️ ¿Quién fue Warshall y qué es la Cerradura Transitiva?"):
+    st.markdown("""
+    **Stephen Warshall (1935 – 2006)** fue un destacado investigador y científico de la computación estadounidense. En 1962, publicó este elegante algoritmo que revolucionó la forma de encontrar conectividad en grandes redes de datos.
+    
+    **¿Qué es la Cerradura Transitiva?**
+    Es el principio matemático de deducir rutas indirectas. En términos sencillos: si puedes ir del nodo **A** al **B**, y del **B** al **C**, entonces existe un camino (indirecto) de **A** hacia **C**. 
+    
+    El algoritmo de Warshall evalúa estas combinaciones paso a paso para transformar nuestra *Matriz de Adyacencia* (conexiones directas) en una *Matriz de Caminos* (conectividad total o cerradura transitiva).
+    """)
+# -------------------------------------------------------
+
 # Panel lateral
 st.sidebar.header("⚙️ Configuración del Grafo")
 num_nodos = st.sidebar.slider("Selecciona la cantidad de nodos", min_value=4, max_value=12, value=5)
