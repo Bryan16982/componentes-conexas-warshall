@@ -1,8 +1,11 @@
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
 import random
 import pandas as pd
+from pyvis.network import Network
+import streamlit.components.v1 as components
+import tempfile
+import os
 
 # Configuración principal de la página web
 st.set_page_config(page_title="Componentes Conexas", layout="wide")
@@ -120,82 +123,93 @@ def encontrar_componentes(caminos):
             componentes.append(comp)
     return componentes
 
-# NUEVA FUNCIÓN: Mostrar solo el grafo inicial en forma circular
-def mostrar_grafo_individual(matriz):
+# ==========================================
+# NUEVA FUNCIÓN DE GRAFOS INTERACTIVOS FLEXIBLES (PyVis)
+# ==========================================
+def mostrar_grafo_interactivo(matriz, componentes=None, tipo="inicial", height="350px"):
     n = len(matriz)
-    fig, ax1 = plt.subplots(figsize=(6, 5))
-    pos = {}
+    net = Network(directed=True, height=height, width="100%", bgcolor="transparent")
     
-    # Distribución circular simple
-    angulos = np.linspace(0, 2 * np.pi, n, endpoint=False)
-    for i in range(n):
-        pos[i] = (np.cos(angulos[i]), np.sin(angulos[i]))
+    # Opciones físicas para que el grafo flote y sea arrastrable de forma fluida
+    net.set_options('''
+    var options = {
+      "nodes": {
+        "borderWidth": 2.5,
+        "size": 22,
+        "color": {
+          "background": "white"
+        },
+        "font": {
+          "color": "black",
+          "size": 16,
+          "face": "sans-serif",
+          "bold": true
+        }
+      },
+      "edges": {
+        "color": {
+          "inherit": false
+        },
+        "smooth": {
+          "type": "curvedCW",
+          "roundness": 0.2
+        }
+      },
+      "physics": {
+        "barnesHut": {
+          "gravitationalConstant": -2000,
+          "centralGravity": 0.3,
+          "springLength": 150
+        },
+        "minVelocity": 0.75
+      }
+    }
+    ''')
 
-    # Dibujar flechas
-    for i in range(n):
-        for j in range(n):
-            if i != j and matriz[i][j] == 1:
-                curva = 0.15 if matriz[j][i] == 1 and i < j else (-0.15 if matriz[j][i] == 1 else 0)
-                ax1.annotate("", xy=pos[j], xytext=pos[i],
-                             arrowprops=dict(arrowstyle="->", connectionstyle=f"arc3,rad={curva}", linewidth=1.5, shrinkA=18, shrinkB=18, color="#1976D2"))
-    
-    # Dibujar nodos
-    for i in range(n):
-        ax1.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
-        ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
-    
-    ax1.margins(0.2) 
-    ax1.set_title("Grafo Dirigido Inicial", fontweight="bold", fontsize=11) 
-    ax1.axis("off")
-    plt.tight_layout()
-    return fig
-
-def mostrar_grafos_comparativos(matriz, componentes):
-    n = len(matriz)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-    pos = {}
+    # Identificar a qué componente pertenece cada nodo (si estamos en el grafo comparativo final)
     mapa_comp = {}
-    for c_idx, comp in enumerate(componentes):
-        cx = c_idx * 3.5  
-        cy = 0
-        angulos = np.linspace(0, 2 * np.pi, len(comp), endpoint=False)
-        for i, nodo in enumerate(comp):
-            radio = 1.0 if len(comp) > 1 else 0
-            pos[nodo] = (cx + np.cos(angulos[i]) * radio, cy + np.sin(angulos[i]) * radio)
-            mapa_comp[nodo] = c_idx
+    if componentes:
+        for c_idx, comp in enumerate(componentes):
+            for nodo in comp:
+                mapa_comp[nodo] = c_idx
 
-    # --- GRAFO 1: ORIGINAL ---
+    # 1. Añadir Nodos
+    for i in range(n):
+        if tipo == "componentes" and componentes:
+            color_border = "#1B5E20" # Verde oscuro
+            color_hover = "#2E7D32"  # Verde brillante
+        else:
+            color_border = "#0D47A1" # Azul oscuro
+            color_hover = "#1976D2"  # Azul brillante
+            
+        net.add_node(i, label=nombre_nodo(i), 
+                     color={"border": color_border, "background": "white",
+                            "highlight": {"border": "#F59E0B", "background": "white"},
+                            "hover": {"border": color_hover, "background": "white"}})
+
+    # 2. Añadir Aristas (Flechas)
     for i in range(n):
         for j in range(n):
             if i != j and matriz[i][j] == 1:
-                curva = 0.15 if matriz[j][i] == 1 and i < j else (-0.15 if matriz[j][i] == 1 else 0)
-                ax1.annotate("", xy=pos[j], xytext=pos[i],
-                             arrowprops=dict(arrowstyle="->", connectionstyle=f"arc3,rad={curva}", linewidth=1.5, shrinkA=18, shrinkB=18, color="#1976D2"))
-    for i in range(n):
-        ax1.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
-        ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
+                es_misma_comp = mapa_comp.get(i) == mapa_comp.get(j) if componentes else False
+                
+                if tipo == "componentes":
+                    if es_misma_comp:
+                        net.add_edge(i, j, color="#2E7D32", width=2, arrows="to")
+                    # No dibujamos aristas entre distintas componentes en el gráfico final (tal como tenías)
+                else:
+                    net.add_edge(i, j, color="#1976D2", width=2, arrows="to")
+                    
+    # Renderizado seguro en Streamlit
+    tmp_dir = tempfile.gettempdir()
+    tmp_path = os.path.join(tmp_dir, f"grafo_{random.randint(1000, 99999)}.html")
+    net.save_graph(tmp_path)
     
-    ax1.margins(0.2) 
-    ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold", fontsize=11) 
-    ax1.axis("off")
-
-    # --- GRAFO 2: COMPONENTES CONEXAS ---
-    for i in range(n):
-        for j in range(n):
-            if i != j and matriz[i][j] == 1 and mapa_comp.get(i) == mapa_comp.get(j):
-                curva = 0.15 if matriz[j][i] == 1 and i < j else (-0.15 if matriz[j][i] == 1 else 0)
-                ax2.annotate("", xy=pos[j], xytext=pos[i],
-                             arrowprops=dict(arrowstyle="->", connectionstyle=f"arc3,rad={curva}", linewidth=1.5, shrinkA=18, shrinkB=18, color="#2E7D32"))
-    for i in range(n):
-        ax2.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#1B5E20", facecolor="white", linewidths=2, zorder=2)
-        ax2.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
+    with open(tmp_path, "r", encoding="utf-8") as f:
+        html_data = f.read()
     
-    ax2.margins(0.2) 
-    ax2.set_title("Componentes Fuertemente Conexas", fontweight="bold", fontsize=11) 
-    ax2.axis("off")
-    
-    plt.tight_layout(pad=2.0) 
-    return fig
+    # Renderizamos el HTML interactivo dentro del contenedor de Streamlit
+    components.html(html_data, height=int(height.replace("px", "")) + 15)
 
 def generar_aleatorio(n):
     matriz = np.zeros((n, n), dtype=int)
@@ -260,17 +274,14 @@ if tipo_generacion == "Generación Aleatoria":
         
     df_matriz = pd.DataFrame(st.session_state['matriz'], index=etiquetas, columns=etiquetas)
     
-    # --- NUEVO LAYOUT: Matriz a la Izquierda, Grafo a la Derecha ---
+    # --- LAYOUT ALEATORIO: Matriz Izq / Grafo Der ---
     col_mat_izq, col_graf_der = st.columns([1.2, 1.8])
-    
     with col_mat_izq:
         st.markdown("**Matriz de Adyacencia Inicial:**")
         st.table(df_matriz.style.apply(aplicar_colores_basicos, axis=None))
-        
     with col_graf_der:
-        st.markdown("**Visualización del Grafo:**")
-        fig_inicial = mostrar_grafo_individual(st.session_state['matriz'])
-        st.pyplot(fig_inicial)
+        st.markdown("**Visualización del Grafo Dirigido Inicial:**")
+        mostrar_grafo_interactivo(st.session_state['matriz'], tipo="inicial", height="350px")
 
 elif tipo_generacion == "Generación Manual":
     st.subheader("✍️ Generación Manual Interactiva")
@@ -281,23 +292,28 @@ elif tipo_generacion == "Generación Manual":
         st.session_state['reset_count'] += 1
         st.rerun()
 
-    st.markdown("Marca las casillas donde exista una conexión directa (**Fila** ➡️ **Columna**).")
-
-    df_base = pd.DataFrame(st.session_state['matriz'].astype(bool), index=etiquetas, columns=etiquetas)
-    config_columnas = {nodo: st.column_config.CheckboxColumn(nodo, required=True) for nodo in etiquetas}
-    llave_dinamica = f"editor_manual_{num_nodos}_{st.session_state['reset_count']}"
+    # --- LAYOUT MANUAL: Matriz Izq / Grafo Der ---
+    col_mat_izq, col_graf_der = st.columns([1.2, 1.8])
     
-    col_espacio1, col_tabla, col_espacio2 = st.columns([1, 4, 1])
-    with col_tabla:
+    with col_mat_izq:
+        st.markdown("Marca las casillas donde exista conexión directa (**Fila** ➡️ **Columna**).")
+        df_base = pd.DataFrame(st.session_state['matriz'].astype(bool), index=etiquetas, columns=etiquetas)
+        config_columnas = {nodo: st.column_config.CheckboxColumn(nodo, required=True) for nodo in etiquetas}
+        llave_dinamica = f"editor_manual_{num_nodos}_{st.session_state['reset_count']}"
+        
         df_editado = st.data_editor(
             df_base, 
             key=llave_dinamica,
             column_config=config_columnas,
             use_container_width=True
         )
-    matriz_manual = df_editado.astype(int).to_numpy().copy()
-    np.fill_diagonal(matriz_manual, 0)      
-    st.session_state['matriz'] = matriz_manual
+        matriz_manual = df_editado.astype(int).to_numpy().copy()
+        np.fill_diagonal(matriz_manual, 0)      
+        st.session_state['matriz'] = matriz_manual
+        
+    with col_graf_der:
+        st.markdown("**Visualización del Grafo Dirigido Inicial:**")
+        mostrar_grafo_interactivo(st.session_state['matriz'], tipo="inicial", height="350px")
 
 st.markdown("---")
 st.subheader("🧠 Procesamiento Matemático y Paso a Paso")
@@ -402,5 +418,12 @@ if st.session_state['calculado']:
             
         with col_der:
             st.markdown("### 📊 Representación Gráfica")
-            fig = mostrar_grafos_comparativos(st.session_state['matriz'], st.session_state['componentes'])
-            st.pyplot(fig)
+            col_g1, col_g2 = st.columns(2)
+            
+            with col_g1:
+                st.markdown("<p style='text-align: center;'><strong>Grafo Dirigido Original (G)</strong></p>", unsafe_allow_html=True)
+                mostrar_grafo_interactivo(st.session_state['matriz'], tipo="original", height="400px")
+                
+            with col_g2:
+                st.markdown("<p style='text-align: center;'><strong>Componentes Fuertemente Conexas</strong></p>", unsafe_allow_html=True)
+                mostrar_grafo_interactivo(st.session_state['matriz'], componentes=st.session_state['componentes'], tipo="componentes", height="400px")
