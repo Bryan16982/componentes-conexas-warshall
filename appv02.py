@@ -126,8 +126,8 @@ def mostrar_grafos_comparativos(matriz, componentes):
     for i in range(n):
         ax1.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#0D47A1", facecolor="white", linewidths=2, zorder=2)
         ax1.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
-    
-    ax1.margins(0.2) # <-- SOLUCION AL CORTE DE NODOS
+    #--- SOLUCION AL CORTE DE NODOS ---
+    ax1.margins(0.2) 
     ax1.set_title("Grafo Dirigido Original (G)", fontweight="bold", fontsize=11) # <-- SOLUCION AL TRASLAPE
     ax1.axis("off")
 
@@ -141,8 +141,8 @@ def mostrar_grafos_comparativos(matriz, componentes):
     for i in range(n):
         ax2.scatter(pos[i][0], pos[i][1], s=800, edgecolors="#1B5E20", facecolor="white", linewidths=2, zorder=2)
         ax2.text(pos[i][0], pos[i][1], nombre_nodo(i), ha="center", va="center", fontsize=11, fontweight="bold", zorder=3)
-    
-    ax2.margins(0.2) # <-- SOLUCION AL CORTE DE NODOS
+    #--- SOLUCION AL CORTE DE NODOS ---
+    ax2.margins(0.2) 
     ax2.set_title("Componentes Fuertemente Conexas", fontweight="bold", fontsize=11) # <-- SOLUCION AL TRASLAPE
     ax2.axis("off")
     
