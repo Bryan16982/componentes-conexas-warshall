@@ -34,7 +34,7 @@ st.markdown('''
         border: 2px solid #888888 !important; 
     }
     
-    /* COLORES CHEVERES PARA LOS ENCABEZADOS (LETRAS DE LOS NODOS) */
+    /* COLORES PARA LOS ENCABEZADOS (LETRAS DE LOS NODOS) */
     .stTable th {
         color: #F59E0B !important; /* Color Ambar/Dorado brillante */
         background-color: rgba(128, 128, 128, 0.15) !important; /* Fondo sutil para separarlo de los números */
